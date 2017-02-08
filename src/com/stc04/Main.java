@@ -1,12 +1,8 @@
 package com.stc04;
 
-import com.stc04.parser.Parser;
+import com.stc04.executor.Executor;
 import com.stc04.processors.ThreadSafeSum;
 import com.stc04.reporters.StdOutReporter;
-
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
 
 public class Main {
 
@@ -18,25 +14,16 @@ public class Main {
 
         StdOutReporter stdOutReporter = new StdOutReporter();
         ThreadSafeSum threadSafeSum = new ThreadSafeSum(stdOutReporter);
+        Executor executor = new Executor(args, threadSafeSum);
 
-        for (String resource: args) {
-            try (FileReader fr = new FileReader(resource)) {
-                Parser p = new Parser(fr, threadSafeSum);
-                p.run();
+        try {
+            if (executor.run()) {
+                stdOutReporter.reportState(threadSafeSum.getValue(), true);
             }
-            catch (NumberFormatException ex) {
-                System.err.println(ex.getMessage() + ": invalid input data.");
-                return;
-            }
-            catch (FileNotFoundException e) {
-                System.err.println("Resource not found: '" + resource + "'. " + e.getMessage());
-                return;
-            }
-            catch (IOException e) {
-                System.err.println("Resource read error: '" + resource + "'. " + e.getMessage());
-                return;
-            }
+        } catch (InterruptedException e) {
+            System.err.println("Working thread interrupted.");
+            e.printStackTrace();
         }
-        stdOutReporter.reportState(threadSafeSum.getValue(), true);
     }
+
 }

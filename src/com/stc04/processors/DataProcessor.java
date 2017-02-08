@@ -5,10 +5,12 @@ package com.stc04.processors;
  * использоваться для обработки поступающих чисел.
  */
 public interface DataProcessor {
+
     /**
      * Метод используется поставщиком данных, для передачи очередного значения.
      *
      * @param newValue очередное значение для обработки.
      */
-    void consume(long newValue);
+    void consumeValue(long newValue);
+
 }
