@@ -80,7 +80,7 @@ public class Executor implements StateProcessor {
     }
 
     @Override
-    public boolean isActive() {
+    public boolean getActive() {
         return active;
     }
 }

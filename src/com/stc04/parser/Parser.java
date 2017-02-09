@@ -84,7 +84,7 @@ public class Parser implements Runnable {
         String nextLine;
         try (BufferedReader localReader = getReader()) {
             while ((nextLine = localReader.readLine()) != null) {
-                if (!stateProcessor.isActive())
+                if (!stateProcessor.getActive())
                     break;
 
                 for (String item : nextLine.split("\\s")) {

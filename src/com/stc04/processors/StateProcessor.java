@@ -17,5 +17,5 @@ public interface StateProcessor {
      *
      * @return true, если нужно продолжать и false - если пора остановиться.
      */
-    boolean isActive();
+    boolean getActive();
 }
