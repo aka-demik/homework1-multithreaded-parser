@@ -56,6 +56,12 @@ class ParserTest {
     }
 
     @Test
+    void unicodeMinus() throws Exception {
+        final String testData = "1 123 -123  —2 –2 ‒2 −2 8 124 -124";
+        assertEquals(132, getSum(testData).getValue());
+    }
+
+    @Test
     void malformedWithText() throws Exception {
         final String testData = "2 qwe";
         assertEquals(NumberFormatException.class,
