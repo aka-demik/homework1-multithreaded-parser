@@ -1,8 +1,6 @@
-package com.stc04;
-
-import com.stc04.executor.Executor;
-import com.stc04.processors.ThreadSafeSum;
-import com.stc04.reporters.StdOutReporter;
+import executor.Executor;
+import processors.ThreadSafeSum;
+import reporters.StdOutReporter;
 
 public class Main {
 

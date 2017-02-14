@@ -1,7 +1,6 @@
-package com.stc04.tests.executor;
+package executor;
 
-import com.stc04.executor.Executor;
-import com.stc04.processors.ThreadSafeSum;
+import processors.ThreadSafeSum;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

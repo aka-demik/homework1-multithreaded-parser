@@ -1,6 +1,5 @@
-package com.stc04.tests.processors;
+package processors;
 
-import com.stc04.processors.ThreadSafeSum;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -32,20 +31,15 @@ class ThreadSafeSumTest {
     void consumeValueMultiThread() throws InterruptedException {
         ThreadSafeSum threadSafeSum = new ThreadSafeSum(null);
         Thread[] threads = new Thread[100];
-        Runnable test = new Runnable() {
-            @Override
-            public void run() {
-                threadSafeSum.consumeValue(10);
-            }
-        };
+        Runnable test = () -> threadSafeSum.consumeValue(10);
 
         for (int i = 0; i < threads.length; i++) {
             threads[i] = new Thread(test);
             threads[i].start();
         }
 
-        for (int i = 0; i < threads.length; i++) {
-            threads[i].join();
+        for (Thread thread : threads) {
+            thread.join();
         }
 
         long expected = 1000;

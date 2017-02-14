@@ -1,4 +1,4 @@
-package com.stc04.processors;
+package processors;
 
 /**
  * Интерфейс для слежения за состоянием обработки.

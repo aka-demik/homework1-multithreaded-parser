@@ -1,6 +1,5 @@
-package com.stc04.tests.reporters;
+package reporters;
 
-import com.stc04.reporters.StdOutReporter;
 import org.junit.jupiter.api.*;
 
 import java.io.ByteArrayOutputStream;

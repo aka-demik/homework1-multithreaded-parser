@@ -1,4 +1,4 @@
-package com.stc04.processors;
+package processors;
 
 /**
  * Интерфейс <code>DataProcessor</code> должен быть реализован любым объектом, который будет

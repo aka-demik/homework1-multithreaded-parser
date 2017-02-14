@@ -1,8 +1,7 @@
-package com.stc04.tests.parser;
+package parser;
 
-import com.stc04.parser.Parser;
-import com.stc04.processors.StateProcessor;
-import com.stc04.processors.ThreadSafeSum;
+import processors.StateProcessor;
+import processors.ThreadSafeSum;
 import org.junit.jupiter.api.Test;
 
 import java.io.Reader;
@@ -107,7 +106,7 @@ class StateProcessorMock implements StateProcessor {
         active = false;
     }
 
-    public Exception getConsumedException() {
+    Exception getConsumedException() {
         return consumedException;
     }
 

@@ -1,6 +1,6 @@
-package com.stc04.processors;
+package processors;
 
-import com.stc04.reporters.DataProcessReporter;
+import reporters.DataProcessReporter;
 
 import java.util.concurrent.atomic.AtomicLong;
 

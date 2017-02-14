@@ -1,4 +1,4 @@
-package com.stc04.reporters;
+package reporters;
 
 /**
  * Реализация интерфейса пользователя, использующая {@link System#out} для отображения данных.

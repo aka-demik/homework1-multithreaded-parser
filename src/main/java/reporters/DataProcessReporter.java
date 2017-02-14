@@ -1,4 +1,4 @@
-package com.stc04.reporters;
+package reporters;
 
 /**
  * Интерфейс передачи данных подсистеме взаимодействия с пользователем.

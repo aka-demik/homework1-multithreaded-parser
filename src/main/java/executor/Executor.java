@@ -1,8 +1,8 @@
-package com.stc04.executor;
+package executor;
 
-import com.stc04.parser.Parser;
-import com.stc04.processors.DataProcessor;
-import com.stc04.processors.StateProcessor;
+import parser.Parser;
+import processors.DataProcessor;
+import processors.StateProcessor;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;

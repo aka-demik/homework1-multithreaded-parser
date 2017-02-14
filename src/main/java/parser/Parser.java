@@ -1,7 +1,7 @@
-package com.stc04.parser;
+package parser;
 
-import com.stc04.processors.DataProcessor;
-import com.stc04.processors.StateProcessor;
+import processors.DataProcessor;
+import processors.StateProcessor;
 
 import java.io.*;
 import java.net.URL;
