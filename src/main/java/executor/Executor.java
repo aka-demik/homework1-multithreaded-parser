@@ -1,11 +1,13 @@
 package executor;
 
+import org.apache.log4j.Logger;
 import parser.Parser;
 import processors.DataProcessor;
 import processors.StateProcessor;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.util.Arrays;
+
+import static java.lang.String.format;
 
 /**
  * Обработчик группы ресурсов.
@@ -14,6 +16,7 @@ import java.io.IOException;
  */
 public class Executor implements StateProcessor {
 
+    private static Logger logger = Logger.getLogger(Executor.class);
     private final String[] resources;
     private final DataProcessor dataProcessor;
     private boolean active = true;
@@ -25,6 +28,7 @@ public class Executor implements StateProcessor {
      * @param dataProcessor процессор для распарсенных данных.
      */
     public Executor(String resources[], DataProcessor dataProcessor) {
+        logger.trace(format("create with %s, %s", dataProcessor, Arrays.toString(resources)));
 
         if (resources == null || resources.length == 0) {
             throw new IllegalArgumentException("Resources is empty");
@@ -44,6 +48,8 @@ public class Executor implements StateProcessor {
      * @return true если обработка успешно завершена. Иначе false.
      */
     public boolean run() throws InterruptedException {
+        logger.trace("creating parse threads");
+
         Thread[] threads = new Thread[resources.length];
 
         try {
@@ -52,14 +58,17 @@ public class Executor implements StateProcessor {
                 threads[i].start();
             }
         } catch (Exception ex) {
+            logger.error("thread creation error", ex);
             consumeException(ex);
             return false;
         } finally {
+            logger.trace("waiting for parse threads");
             for (Thread thread : threads) {
                 if (thread != null) {
                     thread.join();
                 }
             }
+            logger.trace("all parse threads finished");
         }
 
         return active;
@@ -68,15 +77,6 @@ public class Executor implements StateProcessor {
     @Override
     public void consumeException(Exception ex) {
         active = false;
-        if (ex instanceof NumberFormatException) {
-            System.err.println(ex.getMessage() + ": invalid input data.");
-        } else if (ex instanceof FileNotFoundException) {
-            System.err.println("Resource not found: " + ex.getMessage());
-        } else if (ex instanceof IOException) {
-            System.err.println("Resource read error: " + ex.getMessage());
-        } else {
-            ex.printStackTrace();
-        }
     }
 
     @Override

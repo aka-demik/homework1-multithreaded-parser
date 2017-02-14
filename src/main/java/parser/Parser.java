@@ -1,10 +1,13 @@
 package parser;
 
+import org.apache.log4j.Logger;
 import processors.DataProcessor;
 import processors.StateProcessor;
 
 import java.io.*;
 import java.net.URL;
+
+import static java.lang.String.format;
 
 /**
  * Парсер текста в формате, описанном в задании 1 вариант 3.
@@ -17,6 +20,7 @@ import java.net.URL;
  */
 public class Parser implements Runnable {
 
+    private static Logger logger = Logger.getLogger(Parser.class);
     private final String resource;
     private final DataProcessor dataProcessor;
     private final StateProcessor stateProcessor;
@@ -33,6 +37,7 @@ public class Parser implements Runnable {
      */
     public Parser(final Reader reader, DataProcessor dataProcessor, StateProcessor stateProcessor)
             throws IllegalArgumentException {
+        logger.trace(format("create for reader %s, %s, %s", reader, dataProcessor, stateProcessor));
 
         if (reader == null) {
             throw new IllegalArgumentException("Reader must not be null");
@@ -59,6 +64,8 @@ public class Parser implements Runnable {
 
     public Parser(String resource, DataProcessor dataProcessor, StateProcessor stateProcessor)
             throws IllegalArgumentException {
+        logger.trace(format("create for resource '%s', %s, %s", resource, dataProcessor, stateProcessor));
+
         if (resource == null) {
             throw new IllegalArgumentException("Resource must not be null");
         }
@@ -81,6 +88,9 @@ public class Parser implements Runnable {
      * Выполняет обработку входных данных.
      */
     public void run() {
+        logger.debug(format("data parsing started for '%s'",
+                resource != null ? resource : bufferedReader));
+
         String nextLine;
         try (BufferedReader localReader = getReader()) {
             while ((nextLine = localReader.readLine()) != null) {
@@ -105,7 +115,17 @@ public class Parser implements Runnable {
                     }
                 }
             }
+
+            if (stateProcessor.getActive())
+                logger.debug(format("data parsing done for '%s'",
+                        resource != null ? resource : bufferedReader));
+            else
+                logger.debug(format("data parsing stoped for '%s'",
+                        resource != null ? resource : bufferedReader));
+
         } catch (Exception ex) {
+            logger.error(format("data parsing error in '%s'",
+                    resource != null ? resource : bufferedReader), ex);
             stateProcessor.consumeException(ex);
         }
     }

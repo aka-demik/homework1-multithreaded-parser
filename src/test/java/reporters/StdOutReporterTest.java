@@ -40,8 +40,7 @@ class StdOutReporterTest {
 
         reporter.reportState(100, false);
 
-        assertEquals("Current state: 100",
-                outContent.toString().trim());
+        assertEquals(0, outContent.size());
         assertEquals(0, errContent.size());
     }
 
