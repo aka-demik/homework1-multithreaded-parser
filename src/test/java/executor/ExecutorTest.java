@@ -1,7 +1,7 @@
 package executor;
 
-import processors.ThreadSafeSum;
 import org.junit.jupiter.api.Test;
+import processors.ThreadSafeSum;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 

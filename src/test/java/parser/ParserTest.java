@@ -1,8 +1,8 @@
 package parser;
 
+import org.junit.jupiter.api.Test;
 import processors.StateProcessor;
 import processors.ThreadSafeSum;
-import org.junit.jupiter.api.Test;
 
 import java.io.Reader;
 import java.io.StringReader;
