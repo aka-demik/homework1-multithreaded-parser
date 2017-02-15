@@ -66,7 +66,7 @@ public class Parser implements Runnable {
             throws IllegalArgumentException {
         logger.trace(format("create for resource '%s', %s, %s", resource, dataProcessor, stateProcessor));
 
-        if (resource == null) {
+        if (resource == null || resource.isEmpty()) {
             throw new IllegalArgumentException("Resource must not be null");
         }
 
@@ -116,12 +116,9 @@ public class Parser implements Runnable {
                 }
             }
 
-            if (stateProcessor.getActive())
-                logger.debug(format("data parsing done for '%s'",
-                        resource != null ? resource : bufferedReader));
-            else
-                logger.debug(format("data parsing stoped for '%s'",
-                        resource != null ? resource : bufferedReader));
+            logger.debug(format("data parsing %s for '%s'",
+                    stateProcessor.getActive() ? "done" : "stoped",
+                    resource != null ? resource : bufferedReader));
 
         } catch (Exception ex) {
             logger.error(format("data parsing error in '%s'",
@@ -151,12 +148,9 @@ public class Parser implements Runnable {
             }
             return bufferedReader;
         } catch (Exception ex) {
-            if (fr != null) {
-                fr.close();
-            }
-
-            if (is != null) {
-                is.close();
+            try (InputStream tmp = is) {
+                if (fr != null)
+                    fr.close();
             }
             throw ex;
         }

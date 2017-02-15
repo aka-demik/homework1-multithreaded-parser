@@ -4,10 +4,9 @@ import org.junit.jupiter.api.Test;
 import processors.StateProcessor;
 import processors.ThreadSafeSum;
 
-import java.io.Reader;
-import java.io.StringReader;
+import java.io.*;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 class ParserTest {
     private static ThreadSafeSum getSum(String testData) throws Exception {
@@ -37,6 +36,31 @@ class ParserTest {
     }
 
     @Test
+    void readFile() throws Exception {
+        File tempFile = File.createTempFile("parser-test", "data");
+        tempFile.deleteOnExit();
+        try (FileWriter writer = new FileWriter(tempFile)) {
+            writer.write("2 4");
+        }
+
+        ThreadSafeSum safeSum = new ThreadSafeSum();
+        StateProcessorMock stateProcessor = new StateProcessorMock();
+        Parser parser = new Parser(tempFile.getCanonicalPath(), safeSum, stateProcessor);
+        parser.run();
+        stateProcessor.check();
+        assertEquals(6, safeSum.getValue());
+    }
+
+    @Test
+    void readBadFile() throws Exception {
+        ThreadSafeSum safeSum = new ThreadSafeSum();
+        StateProcessorMock stateProcessor = new StateProcessorMock();
+        Parser parser = new Parser("some:\\//:file", safeSum, stateProcessor);
+        parser.run();
+        assertThrows(FileNotFoundException.class, stateProcessor::check);
+    }
+
+    @Test
     void empty() throws Exception {
         final String testData = "";
         assertEquals(0, getSum(testData).getValue());
@@ -46,6 +70,76 @@ class ParserTest {
     void whiteSpaceOnly() throws Exception {
         final String testData = "\r\n \r \n \t \t\t \r\r\n\r";
         assertEquals(0, getSum(testData).getValue());
+    }
+
+    @Test
+    void constructor() {
+        assertNotNull(new Parser(
+                new StringReader(""),
+                new ThreadSafeSum(null),
+                new StateProcessorMock()));
+
+        assertNotNull(new Parser(
+                new BufferedReader(new StringReader("")),
+                new ThreadSafeSum(null),
+                new StateProcessorMock()));
+
+        assertNotNull(new Parser(
+                "data.txt",
+                new ThreadSafeSum(null),
+                new StateProcessorMock()));
+    }
+
+    @Test
+    void constructorWithNull() {
+        assertThrows(IllegalArgumentException.class, () -> {
+            new Parser(
+                    (Reader) null,
+                    new ThreadSafeSum(null),
+                    new StateProcessorMock());
+        });
+
+        assertThrows(IllegalArgumentException.class, () -> {
+            new Parser(
+                    new StringReader(""),
+                    null,
+                    new StateProcessorMock());
+        });
+
+        assertThrows(IllegalArgumentException.class, () -> {
+            new Parser(
+                    new StringReader(""),
+                    new ThreadSafeSum(null),
+                    null);
+        });
+
+        assertThrows(IllegalArgumentException.class, () -> {
+            new Parser(
+                    (String) null,
+                    new ThreadSafeSum(null),
+                    new StateProcessorMock());
+        });
+
+        assertThrows(IllegalArgumentException.class, () -> {
+            new Parser(
+                    "",
+                    new ThreadSafeSum(null),
+                    new StateProcessorMock());
+        });
+
+        assertThrows(IllegalArgumentException.class, () -> {
+            new Parser(
+                    "data.txt",
+                    null,
+                    new StateProcessorMock());
+        });
+
+        assertThrows(IllegalArgumentException.class, () -> {
+            new Parser(
+                    "data.txt",
+                    new ThreadSafeSum(null),
+                    null);
+        });
     }
 
     @Test
