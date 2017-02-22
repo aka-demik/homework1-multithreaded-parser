@@ -6,6 +6,9 @@ import processors.DataProcessor;
 import processors.StateProcessor;
 
 import java.util.Arrays;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import static java.lang.String.format;
 
@@ -50,26 +53,14 @@ public class Executor implements StateProcessor {
     public boolean run() throws InterruptedException {
         logger.trace("creating parse threads");
 
-        Thread[] threads = new Thread[resources.length];
+        ExecutorService pool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
-        try {
-            for (int i = 0; i < resources.length; i++) {
-                threads[i] = new Thread(new Parser(resources[i], dataProcessor, this));
-                threads[i].start();
-            }
-        } catch (Exception ex) {
-            logger.error("thread creation error", ex);
-            consumeException(ex);
-            return false;
-        } finally {
-            logger.trace("waiting for parse threads");
-            for (Thread thread : threads) {
-                if (thread != null) {
-                    thread.join();
-                }
-            }
-            logger.trace("all parse threads finished");
+        for (String resource : resources) {
+            pool.submit(new Parser(resource, dataProcessor, this));
         }
+        pool.shutdown();
+        pool.awaitTermination(1, TimeUnit.DAYS);
+        logger.trace("all parse threads finished");
 
         return active;
     }
