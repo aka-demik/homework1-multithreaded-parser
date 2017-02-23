@@ -4,8 +4,13 @@ import org.apache.log4j.Logger;
 import processors.DataProcessor;
 import processors.StateProcessor;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.stream.Stream;
 
 import static java.lang.String.format;
 
@@ -24,23 +29,23 @@ public class Parser implements Runnable {
     private final String resource;
     private final DataProcessor dataProcessor;
     private final StateProcessor stateProcessor;
-    private BufferedReader bufferedReader;
+    private Stream<String> stream;
 
     /**
      * Создаёт экземпляр парсера.
      *
-     * @param reader         источник строк для парсера.
+     * @param stream         источник строк для парсера.
      * @param dataProcessor  потребитель данных парсинга. Ему будет передан каждый найденый элемент
      *                       путём вызова {@link DataProcessor#consumeValue}.
      * @param stateProcessor контролёр процесса обработки.
      * @throws IllegalArgumentException если reader или dataProcessor равны null.
      */
-    public Parser(final Reader reader, DataProcessor dataProcessor, StateProcessor stateProcessor)
+    public Parser(final Stream<String> stream, DataProcessor dataProcessor, StateProcessor stateProcessor)
             throws IllegalArgumentException {
-        logger.trace(format("create for reader %s, %s, %s", reader, dataProcessor, stateProcessor));
+        logger.trace(format("create for reader %s, %s, %s", stream, dataProcessor, stateProcessor));
 
-        if (reader == null) {
-            throw new IllegalArgumentException("Reader must not be null");
+        if (stream == null) {
+            throw new IllegalArgumentException("stream must not be null");
         }
 
         if (dataProcessor == null) {
@@ -51,12 +56,7 @@ public class Parser implements Runnable {
             throw new IllegalArgumentException("State processor must not be null");
         }
 
-        if (reader instanceof BufferedReader) {
-            bufferedReader = (BufferedReader) reader;
-        } else {
-            bufferedReader = new BufferedReader(reader);
-        }
-
+        this.stream = stream;
         this.resource = null;
         this.dataProcessor = dataProcessor;
         this.stateProcessor = stateProcessor;
@@ -79,7 +79,7 @@ public class Parser implements Runnable {
         }
 
         this.resource = resource;
-        this.bufferedReader = null;
+        this.stream = null;
         this.dataProcessor = dataProcessor;
         this.stateProcessor = stateProcessor;
     }
@@ -89,70 +89,58 @@ public class Parser implements Runnable {
      */
     public void run() {
         logger.debug(format("data parsing started for '%s'",
-                resource != null ? resource : bufferedReader));
+                resource != null ? resource : stream));
 
         String nextLine;
-        try (BufferedReader localReader = getReader()) {
-            while ((nextLine = localReader.readLine()) != null) {
-                if (!stateProcessor.getActive())
-                    break;
-
-                for (String item : nextLine.split("\\s")) {
-                    if (item.length() > 0) {
-                        switch (item.charAt(0)) {
-                            case '\u2012':
-                            case '\u2013':
-                            case '\u2014':
-                            case '\u2212':
-                                item = "-" + item.substring(1);
-                                break;
-                        }
-
-                        long l = Long.parseLong(item);
-                        if (l > 0 && (l & 1) == 0) {
-                            dataProcessor.consumeValue(l);
-                        }
-                    }
-                }
-            }
+        try {
+            stream = getReader();
+            stream.parallel().forEach(this::parseLine);
 
             logger.debug(format("data parsing %s for '%s'",
                     stateProcessor.getActive() ? "done" : "stoped",
-                    resource != null ? resource : bufferedReader));
+                    resource != null ? resource : stream));
 
         } catch (Exception ex) {
             logger.error(format("data parsing error in '%s'",
-                    resource != null ? resource : bufferedReader), ex);
+                    resource != null ? resource : stream), ex);
             stateProcessor.consumeException(ex);
         }
     }
 
-    private BufferedReader getReader() throws IOException {
-        if (bufferedReader != null) {
-            return bufferedReader;
+    private void parseLine(String nextLine) {
+        for (String item : nextLine.split("\\s")) {
+            if (item.length() > 0) {
+                switch (item.charAt(0)) {
+                    case '\u2012':
+                    case '\u2013':
+                    case '\u2014':
+                    case '\u2212':
+                        item = "-" + item.substring(1);
+                        break;
+                }
+
+                long l = Long.parseLong(item);
+                if (l > 0 && (l & 1) == 0) {
+                    dataProcessor.consumeValue(l);
+                }
+            }
+        }
+    }
+
+    private Stream<String> getReader() throws IOException {
+        if (stream != null) {
+            return stream;
         }
 
         if (resource == null) {
             throw new IllegalStateException("Resource must not be null");
         }
 
-        FileReader fr = null;
-        InputStream is = null;
-        try {
-            if (resource.startsWith("http://") || resource.startsWith("https://")) {
-                is = new URL(resource).openStream();
-                bufferedReader = new BufferedReader(new InputStreamReader(is));
-            } else {
-                fr = new FileReader(resource);
-                bufferedReader = new BufferedReader(fr);
-            }
-            return bufferedReader;
-        } catch (Exception ex) {
-            try (InputStream tmp = is) {
-                if (fr != null)
-                    fr.close();
-            }
-            throw ex;
+        if (resource.startsWith("http://") || resource.startsWith("https://")) {
+            stream = new BufferedReader(new InputStreamReader(new URL(resource).openStream())).lines();
+        } else {
+            stream = Files.lines(Paths.get(resource));
         }
+        return stream;
     }
 }
