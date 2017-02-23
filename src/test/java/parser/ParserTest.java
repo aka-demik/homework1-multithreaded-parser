@@ -4,25 +4,30 @@ import org.junit.jupiter.api.Test;
 import processors.StateProcessor;
 import processors.ThreadSafeSum;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.nio.file.InvalidPathException;
+import java.util.Arrays;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class ParserTest {
-    private static ThreadSafeSum getSum(String testData) throws Exception {
+    private static ThreadSafeSum getSum(String[] testData) throws Exception {
         ThreadSafeSum safeSum = new ThreadSafeSum();
         StateProcessorMock stateProcessor = new StateProcessorMock();
-        Reader reader = new StringReader(testData);
+        Stream<String> reader = Arrays.stream(testData);
         Parser parser = new Parser(reader, safeSum, stateProcessor);
         parser.run();
         stateProcessor.check();
         return safeSum;
     }
 
-    private static StateProcessorMock getState(String testData) {
+    private static StateProcessorMock getState(String[] testData) {
         ThreadSafeSum safeSum = new ThreadSafeSum();
         StateProcessorMock stateProcessor = new StateProcessorMock();
-        Reader reader = new StringReader(testData);
+        Stream<String> reader = Arrays.stream(testData);
         Parser parser = new Parser(reader, safeSum, stateProcessor);
 
         parser.run();
@@ -31,7 +36,7 @@ class ParserTest {
 
     @Test
     void simple() throws Exception {
-        final String testData = "2 4";
+        final String[] testData = {"2 4"};
         assertEquals(6, getSum(testData).getValue());
     }
 
@@ -57,33 +62,23 @@ class ParserTest {
         StateProcessorMock stateProcessor = new StateProcessorMock();
         Parser parser = new Parser("some:\\//:file", safeSum, stateProcessor);
         parser.run();
-        assertThrows(FileNotFoundException.class, stateProcessor::check);
+        assertThrows(InvalidPathException.class, stateProcessor::check);
     }
 
     @Test
     void empty() throws Exception {
-        final String testData = "";
+        final String[] testData = {""};
         assertEquals(0, getSum(testData).getValue());
     }
 
     @Test
     void whiteSpaceOnly() throws Exception {
-        final String testData = "\r\n \r \n \t \t\t \r\r\n\r";
+        final String[] testData = {"\r\n \r \n \t \t\t \r\r\n\r"};
         assertEquals(0, getSum(testData).getValue());
     }
 
     @Test
     void constructor() {
-        assertNotNull(new Parser(
-                new StringReader(""),
-                new ThreadSafeSum(null),
-                new StateProcessorMock()));
-
-        assertNotNull(new Parser(
-                new BufferedReader(new StringReader("")),
-                new ThreadSafeSum(null),
-                new StateProcessorMock()));
-
         assertNotNull(new Parser(
                 "data.txt",
                 new ThreadSafeSum(null),
@@ -94,23 +89,9 @@ class ParserTest {
     void constructorWithNull() {
         assertThrows(IllegalArgumentException.class, () -> {
             new Parser(
-                    (Reader) null,
+                    (Stream<String>) null,
                     new ThreadSafeSum(null),
                     new StateProcessorMock());
-        });
-
-        assertThrows(IllegalArgumentException.class, () -> {
-            new Parser(
-                    new StringReader(""),
-                    null,
-                    new StateProcessorMock());
-        });
-
-        assertThrows(IllegalArgumentException.class, () -> {
-            new Parser(
-                    new StringReader(""),
-                    new ThreadSafeSum(null),
-                    null);
         });
 
         assertThrows(IllegalArgumentException.class, () -> {
@@ -144,47 +125,47 @@ class ParserTest {
 
     @Test
     void multiline() throws Exception {
-        final String testData = "2 \r\n 2 \r 2 \n 2 \n\r 2 \t2\t2\n2\r2";
+        final String[] testData = {"2 \r\n 2 \r 2 \n 2 \n\r 2 \t2\t2\n2\r2"};
         assertEquals(18, getSum(testData).getValue());
     }
 
     @Test
     void unicodeMinus() throws Exception {
-        final String testData = "1 123 -123  —2 –2 ‒2 −2 8 124 -124";
+        final String[] testData = {"1 123 -123  —2 –2 ‒2 −2 8 124 -124"};
         assertEquals(132, getSum(testData).getValue());
     }
 
     @Test
     void malformedWithText() throws Exception {
-        final String testData = "2 qwe";
+        final String[] testData = {"2 qwe"};
         assertEquals(NumberFormatException.class,
                 getState(testData).getConsumedException().getClass());
     }
 
     @Test
     void malformedWithMinus() throws Exception {
-        final String testData = "77\r\n2- 3";
+        final String[] testData = {"77", "2- 3"};
         assertEquals(NumberFormatException.class,
                 getState(testData).getConsumedException().getClass());
     }
 
     @Test
     void malformedDangMinus() throws Exception {
-        final String testData = "2\r\n2 - 3";
+        final String[] testData = {"2", "2 - 3"};
         assertEquals(NumberFormatException.class,
                 getState(testData).getConsumedException().getClass());
     }
 
     @Test
     void malformedFloat1() throws Exception {
-        final String testData = "45.5";
+        final String[] testData = {"45.5"};
         assertEquals(NumberFormatException.class,
                 getState(testData).getConsumedException().getClass());
     }
 
     @Test
     void malformedFloat2() throws Exception {
-        final String testData = "3,14";
+        final String[] testData = {"3,14"};
         assertEquals(NumberFormatException.class,
                 getState(testData).getConsumedException().getClass());
     }
