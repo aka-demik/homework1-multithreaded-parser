@@ -7,7 +7,7 @@ import processors.ThreadSafeSum;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
-import java.nio.file.InvalidPathException;
+import java.nio.file.NoSuchFileException;
 import java.util.Arrays;
 import java.util.stream.Stream;
 
@@ -60,9 +60,9 @@ class ParserTest {
     void readBadFile() throws Exception {
         ThreadSafeSum safeSum = new ThreadSafeSum();
         StateProcessorMock stateProcessor = new StateProcessorMock();
-        Parser parser = new Parser("some:\\//:file", safeSum, stateProcessor);
+        Parser parser = new Parser("some-impossible-file", safeSum, stateProcessor);
         parser.run();
-        assertThrows(InvalidPathException.class, stateProcessor::check);
+        assertThrows(NoSuchFileException.class, stateProcessor::check);
     }
 
     @Test
